@@ -24,3 +24,5 @@ def export_tree( clf, feature_names ):
 
     with open('tree.png', 'wb') as f:
         f.write(graph.create_png())
+
+export_tree( clf, iris.feature_names )
