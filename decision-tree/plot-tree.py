@@ -9,21 +9,18 @@ clf = tree.DecisionTreeClassifier()
 clf = clf.fit(iris.data, iris.target)
 
 from sklearn.externals.six import StringIO
+from IPython.display import Image
 import pydot
 
-dot_data = StringIO()
-# tree.export_graphviz(clf, out_file=dot_data)
 
-from IPython.display import Image
+def export_tree( clf, feature_names ):
+    dot_data = StringIO()
 
-# clf is a decision tree object.
-tree.export_graphviz(clf, out_file=dot_data,
-                         feature_names=iris.feature_names,
-                         class_names=iris.target_names,
-                         filled=True, rounded=True,
-                         special_characters=True)
-graph = pydot.graph_from_dot_data(dot_data.getvalue())
-# graph.write_pdf("iris.pdf")
+    tree.export_graphviz(clf, out_file=dot_data,
+                            feature_names=feature_names,
+                            filled=True, rounded=True,
+                            special_characters=True)
+    graph = pydot.graph_from_dot_data(dot_data.getvalue())
 
-with open('picture_out.png', 'wb') as f:
-    f.write(graph.create_png())
+    with open('tree.png', 'wb') as f:
+        f.write(graph.create_png())
