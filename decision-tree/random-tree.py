@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 from sklearn import tree
 from sklearn.metrics import accuracy_score, confusion_matrix;
+from sklearn.metrics import classification_report
+
 
 X, y, attribute_names = util.load(10)
 df = pd.DataFrame(X, columns=attribute_names)
@@ -27,9 +29,11 @@ for s in seeds:
     print "Training : %d ( %.2f )" % ( len(train), len(train)*1.0/len(df) )
     print "Testing : %d ( %.2f )" % ( len(test), len(test)*1.0/len(df) )
 
-    clf = tree.ExtraTreeClassifier();
+    clf = tree.ExtraTreeClassifier( random_state= s, max_depth = 3, min_samples_leaf=5 );
     clf = clf.fit( train[features[:-1]], train['class'] )
     pred_test = clf.predict( test[features[:-1]] );
+
     print "Accuracy %.4f" % ( accuracy_score(test['class'],pred_test) )
+    print classification_report( test['class'],pred_test )
 
     util.export_tree( clf, features, filename="random-tree-"+str(s)+".png" )
