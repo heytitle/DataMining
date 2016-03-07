@@ -16,7 +16,6 @@ df = df[ mask ]
 print "Filter out minority classes ( %d left )" % ( len(df) )
 
 features = df.columns;
-classes =["Metastates","Malign Lymph"]
 
 seeds = [
     10,20,30
@@ -33,4 +32,4 @@ for s in seeds:
     pred_test = clf.predict( test[features[:-1]] );
     print "Accuracy %.4f" % ( accuracy_score(test['class'],pred_test) )
 
-    util.export_tree( clf, features, classes, filename="random-tree-"+str(s)+".png" )
+    util.export_tree( clf, features, filename="random-tree-"+str(s)+".png" )

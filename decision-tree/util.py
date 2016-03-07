@@ -10,7 +10,7 @@ def load(dataset_id):
     dataset = connector.download_dataset(dataset_id)
     return dataset.get_dataset(target=dataset.default_target_attribute, return_attribute_names=True)
 
-def export_tree( clf, features, classes, filename="tree.png" ):
+def export_tree( clf, features, classes=["Metastates","Malign Lymph"], filename="tree.png" ):
 
     tree.export_graphviz(
         clf,
