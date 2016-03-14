@@ -1,7 +1,11 @@
 import numpy as np
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
+import graph as ga
+import calcu as ca
 
+# Initialization
 label = [ True,  True,  True,  True,  True,  True,  True, False, False,
        False, False, False, False]
 
@@ -12,69 +16,103 @@ b_predict = [ True,  True,  True,  True, False,  True,  True, False,  True,
        False,  True, False, False]
 
 c_value = [0.8,0.9,0.7,0.6,0.4,0.8,0.4,0.4,0.6,0.4,0.4,0.4,0.2]
-# Here Zitong randomly setted some threshold values
-c_threshold = [0.5, 0.6, 0.3]
 
-# initialize c_info
-c_predict = []
-fpr_c = []
-tpr_c = []
-auc_c = []
-# Pos & Neg values
-pos = label.count(True)
-neg = label.count(False)
+# Lists that save values
+predict = []
+fpr = []
+tpr = []
+auc = []
 
-def check_threshold(value, threshold):
-	# Returns a list 
-	predict = []
-	# predict = np.zeros((len(value)),dtype = bool)
-	for i in range(0,len(value)):
-		predict.append(value[i]> threshold)
-	return predict
-
-def roc(predict,true):
-	fpr, tpr, thresholds = roc_curve(true, predict)
-	# roc_auc =  auc(fpr,tpr)
-	roc_auc = 1
-	return fpr, tpr,roc_auc
-# Get a_info b_info
-fpr_a, tpr_a, auc_a = roc(a_predict, label)
-fpr_b, tpr_b, auc_b = roc(b_predict, label)
-
-# Get c_info
-for thres in c_threshold:
-	p = check_threshold(c_value,thres)
-	c_predict.append(p)
-	fpr, tpr, auc = roc(p,label)
-	fpr_c.append(fpr)
-	tpr_c.append(tpr)
-	auc_c.append(auc)
 # Initial Color values
-colors = ['red','blue','yellow','cyan','black']
-# Draw scatters of A B C
-dot_a = plt.scatter(fpr_a[1],tpr_a[1],label = 'A',color = colors[0])
-dot_b = plt.scatter(fpr_b[1],tpr_b[1],label = 'B', color = colors[1])
-for i in range(0,len(c_threshold)):
-	plt.scatter(fpr_c[i][1],tpr_c[i][1],color = colors[i+2], label = 'C_'+ str(i) +' threshold value: ' + str(c_threshold[i]))
+colors = ['red','blue','orange','cyan','black','pink']
 
-# Draw cost line --- How can I make the line full screen?
-cost_slope = neg * 1.0 /(pos * 5.0)
-line_cost = plt.plot([0,1],[0, cost_slope])
+def renew(f,t,a):
+	fpr.append(f)
+	tpr.append(t)
+	auc.append(a)
 
-# Draw Convex Hull
-# WELL I SHOULD HAVE APPEND ALL CLASSIFIER INFO IN A SINGLE LIST ...
-# NOW MY CODE LOOKS REALLY UGLY
-# WILL MAKE CHANGE TOMORROW
-# convex_x = [fpr_a[1],fpr_c[0][0],fpr_b[1],fpr_c[2][0],fpr_c[1][0]]
-# convex_y = [tpr_a[1],tpr_c[0][0],tpr_b[1],tpr_c[2][0],tpr_c[1][0]]
-# convex = plt.plot(convex_x,convex_y)
+# Get a_info b_info
+fpr_a, tpr_a, auc_a, thresholds_a = ca.roc(a_predict, label)
+fpr_b, tpr_b, auc_b, thresholds_b= ca.roc(b_predict, label)
+renew(fpr_a,tpr_a,auc_a)
+renew(fpr_b,tpr_b,auc_b)
 
-legend = plt.legend(bbox_to_anchor=(1.05, 1), loc=5,fontsize = 8, scatterpoints =1)
-plt.title('ROC of A, B, and C with thresholds')
+# Get c_infos
+fpr_c, tpr_c, auc_c, thresholds_c = ca.roc(c_value, label)
+c_label = []
+for value in thresholds_c:
+	c_label.append('C ' + str(value))
 
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
-plt.show()
+# Scatter series of c
+for f,t, thres,color in zip(fpr_c,tpr_c,thresholds_c,colors):
+	l = 'C: ' + str(thres)
+	# plt.scatter(f,t,marker = '>', color = color, label = 'C: ' + str(thres)) 
+	ga.scatter(f,t,l,'>',color)
+
+# Scatter A B
+def scatter_ab():
+	dot_a = ga.scatter(fpr_a[1],tpr_a[1],'A', 'o', colors[0])
+	dot_b = ga.scatter(fpr_b[1],tpr_b[1],'B', 'o', colors[1])
+
+# Convex Hullfor A B C
+points = np.array([fpr_c,tpr_c]).T
+points = np.vstack((points,np.array([fpr_a[1],tpr_a[1]])))
+points = np.vstack((points,np.array([fpr_b[1],tpr_b[1]])))
+points = np.vstack((points,np.array([0,0])))
+points = np.vstack((points,np.array([1,1])))
+hull = ConvexHull(points)
+for simplex in hull.simplices:
+	plt.plot(points[simplex, 0], points[simplex, 1], 'k-')
+
+ga.show()
+
+# plot connecting line of C
+# Scatter series of C
+for f,t, thres,color in zip(fpr_c,tpr_c,thresholds_c,colors):
+	l = 'C: ' + str(thres)
+	# plt.scatter(f,t,marker = '>', color = color, label = 'C: ' + str(thres)) 
+	ga.scatter(f,t,l,'>',color)
+
+scatter_ab()
+plt.plot(fpr_c,tpr_c)
+
+ga.show()
+
+# For c_threshold == 0.4
+p = ca.check_threshold(c_value,0.4)
+f, t, a, thres = ca.roc(p,label)
+renew(f,t,a)
+dot_c = ga.scatter(f[1],t[1], 'C: 0.4', 'o',colors[3])
+# Calculate cost line properties
+# fpr X [0]
+# tpr Y [1]
+slope1 = 1.0/5.0
+slope2 = 1.0
+ga.cost_line(slope1, [fpr_b[1],tpr_b[1]])
+ga.cost_line(slope2, [fpr_b[1],tpr_b[1]])
+
+# y_intersect = tpr_b[1]-cost_slope*fpr_b[1]
+# y_intersect1 =tpr_b[1] - cost_slope1 * fpr_b[1]
+# # Draw cost line
+# ga.cost_line([0,1],[y_intersect, y_intersect +cost_slope])
+# ga.cost_linep([0,1],[y_intersect1, y_intersect1 +cost_slope1])
+
+# legend = plt.legend(bbox_to_anchor=(1.05, 1), loc=5,fontsize = 8, scatterpoints =1)
+scatter_ab()
+ga.show()
+
+
+# plt.title('ROC of A, B, and C with thresholds')
+
+# plt.xlim((-0.2,1.2))
+# plt.ylim((0,1.2))
+
+# plt.legend(bbox_to_anchor=(1.05, 1), loc=5,fontsize = 8, scatterpoints =1)
+# plt.title('ROC of A, B, and C with thresholds')
+
+# plt.ylabel('True Positive Rate')
+# plt.xlabel('False Positive Rate')
+# plt.show()
 
 
 
