@@ -15,23 +15,16 @@ def cost_line (slope, cross):
 	y_inter = cross[0] - slope * cross[1]
 	plt.plot([0,1],[y_inter, y_inter + slope])
 
-def plot_accu(x,y,label):
+def plot_mce(x,y,label):
 	plt.plot(x,y,label = label)
+
+	plt.legend(bbox_to_anchor=(1.05, 1), loc=5,fontsize = 12, scatterpoints =1)
 	plt.title('Misclassicification Rate Against K')
 
 	plt.ylabel('Misclassicification Rate')
 	plt.xlabel('K values')
 
-
-
-
-# # Calculate cost line properties
-# cost_slope = 1.0/5.0
-# cost_slope1 = 1.0
-# y_intersect = tpr_b[1]-cost_slope*fpr_b[1]
-# y_intersect1 =tpr_b[1] - cost_slope1 * fpr_b[1]
-
-def show():
+def show_roc():
 	plt.xlim((-0.2,1.2))
 	plt.ylim((0,1.2))
 
