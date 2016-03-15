@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
+from matplotlib.colors import ListedColormap
 
 # Initial Color values
 colors = ['red','blue','orange','cyan','black','pink']
@@ -13,6 +14,15 @@ def cost_line (slope, cross):
 	# tpr Y [1]
 	y_inter = cross[0] - slope * cross[1]
 	plt.plot([0,1],[y_inter, y_inter + slope])
+
+def plot_accu(x,y,label):
+	plt.plot(x,y,label = label)
+	plt.title('Misclassicification Rate Against K')
+
+	plt.ylabel('Misclassicification Rate')
+	plt.xlabel('K values')
+
+
 
 
 # # Calculate cost line properties
@@ -30,6 +40,7 @@ def show():
 
 	plt.ylabel('True Positive Rate')
 	plt.xlabel('False Positive Rate')
+
 
 	plt.show()
 
