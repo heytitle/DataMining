@@ -1,11 +1,13 @@
 import util
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt;
+import collections;
 
 from operator import itemgetter
 
 from sklearn.cross_validation import train_test_split
-from sklearn.cross_validation import StratifiedKFold
+from sklearn import svm
 from time import time
 
 from sklearn.metrics import accuracy_score
@@ -38,9 +40,10 @@ n_iter_search = 20
 
 
 param_dist = {
-    "criterion": ['gini', 'entropy'],
-    "min_samples_leaf": np.arange(5,20),
-    "max_depth": np.arange(5,10)
+    "max_depth": [ 5,8,11 ],
+    "min_samples_split": [ 5, 10, 15 ],
+    "min_samples_leaf": [ 5,10,15,20 ],
+    "criterion": ["gini", "entropy"]
 }
 
 random_search = RandomizedSearchCV(
@@ -51,34 +54,15 @@ random_search = RandomizedSearchCV(
 )
 
 start = time()
+random_search.fit(train[attribute_names[:-1]], train['class'])
+print("RandomizedSearchCV took %.2f seconds for %d candidates"
+      " parameter settings." % ((time() - start), n_iter_search))
+report(random_search.grid_scores_)
 
-kf = StratifiedKFold( train['class'], n_folds=5 )
-
-res = []
-for train_index, test_index in kf:
-    inner_train = train.iloc[train_index]
-    inner_test = train.iloc[test_index]
-    random_search.fit(inner_train[attribute_names[:-1]], inner_train['class'])
-
-    pred_test = random_search.best_estimator_.predict( inner_test[attribute_names[:-1]] )
-    accu = accuracy_score( inner_test['class'], pred_test )
-    d = dict(
-        clf = random_search.best_estimator_,
-        score = accu,
-        params = random_search.best_params_
-    )
-    res.append(d)
-
-res = sorted( res, reverse = True, key=lambda i: i['score'] )
-
-for i, d in enumerate(res):
-    print("Model with rank: {0}".format(i + 1))
-    print("Score: {0:.3f}".format( d['score'] ) )
-    print("Parameters: {0}".format(d['params']))
-
-
-best = res[0]['clf']
+best = random_search.best_estimator_
 pred_test = best.predict( test[attribute_names[:-1]] )
-print "-----------"
+
 print "Accuracy %.4f" % ( accuracy_score(test['class'],pred_test) )
 print classification_report( test['class'],pred_test )
+
+util.export_tree( best, attribute_names, filename="normal-wo-sampling.png" )

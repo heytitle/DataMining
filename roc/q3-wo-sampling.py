@@ -1,7 +1,6 @@
 import util
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt;
 import collections;
 
 from operator import itemgetter
@@ -14,6 +13,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.grid_search import RandomizedSearchCV
 from sklearn import tree
+from sklearn.cross_validation import StratifiedShuffleSplit
 
 def report(grid_scores, n_top=3):
     top_scores = sorted(grid_scores, key=itemgetter(1), reverse=True)[:n_top]
@@ -30,31 +30,32 @@ X, y, attribute_names = util.load(32);
 df = pd.DataFrame(X, columns=attribute_names)
 df['class'] = y
 print "There are %d instances with %d columns" %( len(df), len(df.columns) )
-print df['class']
 
-train, test = train_test_split(df, test_size = 0.2, random_state=20, stratify = df['class'] )
-
+sss = StratifiedShuffleSplit( df['class'], 1, test_size=0.2, random_state=20 )
+test = None
+for train_index, test_index in sss:
+    test = df.iloc[test_index]
 
 clf = tree.DecisionTreeClassifier()
 
 n_iter_search = 20
 
-
 param_dist = {
-    "criterion": ['gini', 'entropy'],
-    "min_samples_leaf": np.arange(5,20),
-    "max_depth": np.arange(5,10)
+    "max_depth": [ 5,8,11 ],
+    "min_samples_split": [ 5, 10, 15 ],
+    "min_samples_leaf": [ 5,10,15,20 ],
+    "criterion": ["gini", "entropy"]
 }
-
 random_search = RandomizedSearchCV(
     clf,
     param_distributions=param_dist,
     n_iter=n_iter_search,
-    scoring = "accuracy"
+    scoring = "accuracy",
+    cv = sss
 )
 
 start = time()
-random_search.fit(train[attribute_names[:-1]], train['class'])
+random_search.fit(df[attribute_names[:-1]], df['class'])
 print("RandomizedSearchCV took %.2f seconds for %d candidates"
       " parameter settings." % ((time() - start), n_iter_search))
 report(random_search.grid_scores_)
@@ -64,5 +65,3 @@ pred_test = best.predict( test[attribute_names[:-1]] )
 
 print "Accuracy %.4f" % ( accuracy_score(test['class'],pred_test) )
 print classification_report( test['class'],pred_test )
-
-util.export_tree( best, attribute_names, filename="normal-wo-sampling.png" )
